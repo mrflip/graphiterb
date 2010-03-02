@@ -1,4 +1,4 @@
-module GraphiteRb
+module Graphiterb
   #
   # @example:
   #   # in initialize, perhaps

@@ -8,7 +8,7 @@ Settings.read 'graphite.yaml'
 Settings.resolve!
 Log = Logger.new($stderr) unless defined?(Log)
 
-class LoadavgGraphiteSender < GraphiteRb::GraphiteSender
+class LoadavgGraphiteSender < Graphiterb::GraphiteSender
   def loadavgs
     File.open('/proc/loadavg').read.strip.split[0..2]
   end
