@@ -26,6 +26,7 @@ Gem::Specification.new do |s|
      "Rakefile",
      "VERSION",
      "bin/example-client.rb",
+     "graphiterb.gemspec",
      "lib/graphiterb.rb",
      "lib/graphiterb/graphite_sender.rb",
      "spec/graphiterb_spec.rb",
