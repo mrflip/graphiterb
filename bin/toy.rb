@@ -8,11 +8,19 @@ Settings.read 'graphite.yaml'
 Settings.resolve!
 Log = Logger.new($stderr) unless defined?(Log)
 
-monitor = Graphiterb::GraphiteLogger.new(:iters => 100, :time => 10)
+monitor = Graphiterb::GraphiteLogger.new(:iters => nil, :time => 5)
+
+handle = 'simple_toy'
 
 loop do
-  monitor.periodically{}
-  sleep rand(1.0)
-  puts '.'
+  monitor.periodically do |metrics, iter, since|
+    metrics << ["scraper.toy.#{handle}.iter", iter]
+    metrics << ["scraper.toy.#{handle}.iter", iter]
+    metrics << ["scraper.toy.#{handle}.iter", iter]
+    metrics << ["scraper.toy.#{handle}.iter", iter]
+  end
+  delay = 2
+  sleep delay
+  print delay.to_s+"\t"
 end
-  
+

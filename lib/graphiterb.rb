@@ -9,3 +9,6 @@ Settings.define :update_delay,   :default => 60,          :description => "How l
 Settings.define :on_error_delay, :default => 60,         :description => "How long to wait on connect errors", :required => true, :type => Integer
 
 require 'graphiterb/graphite_sender'
+module Graphiterb
+  autoload :GraphiteLogger, 'graphiterb/graphite_logger'
+end

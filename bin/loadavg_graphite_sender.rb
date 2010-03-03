@@ -9,13 +9,18 @@ Settings.resolve!
 Log = Logger.new($stderr) unless defined?(Log)
 
 class LoadavgGraphiteSender < Graphiterb::GraphiteSender
-  def loadavgs
-    File.open('/proc/loadavg').read.strip.split[0..2]
+  def hostname
+    @hostname ||= `hostname`.chomp
   end
 
-  def loadavgs_metrics 
+  def loadavgs
+    # File.open('/proc/loadavg').read.strip.split[0..2]
+    `uptime`.chomp.gsub(/.*:\s+/, '').split(/[,\s]+/)
+  end
+
+  def loadavgs_metrics
     %w[1min 5min 15min].zip(loadavgs).map do |duration, avg|
-      ["system_rb.loadavg_#{duration}", avg]
+      ["system.#{hostname}.loadavg_#{duration}", avg]
     end
   end
 
