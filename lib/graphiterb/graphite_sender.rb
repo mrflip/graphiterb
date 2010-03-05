@@ -8,7 +8,6 @@ module Graphiterb
   #   sender.send( ['webserver.pages', pages_this_hour], ['webserver.errors', errors_this_hour] )
   #
   class GraphiteSender
-    attr_accessor :socket
 
     def initialize
       open!
@@ -17,11 +16,14 @@ module Graphiterb
     def open!
       begin
         warn "Connecting to server #{Settings.carbon_server} port #{Settings.carbon_port}"
-        self.socket = TCPSocket.new(Settings.carbon_server, Settings.carbon_port)
+        @socket = TCPSocket.new(Settings.carbon_server, Settings.carbon_port)
       rescue StandardError => e
         Log.warn "Couldn't connect to server #{Settings.carbon_server} port #{Settings.carbon_port}: #{e.class} #{e}"
-        raise e
       end
+    end
+    
+    def socket
+      @socket ||= open!
     end
 
     def safely &block
@@ -30,6 +32,7 @@ module Graphiterb
       rescue StandardError => e
         Log.warn "Sleeping #{Settings.on_error_delay}: #{e.class} #{e}"
         sleep Settings.on_error_delay
+        @socket = nil
         return nil
       end
     end
