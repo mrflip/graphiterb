@@ -15,7 +15,7 @@ class AvailSpaceMonitor
   end
   
   def diskfree
-    @diskfree ||= `df`
+    @diskfree = `df`
   end
   
   def send_metrics
