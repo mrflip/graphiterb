@@ -11,7 +11,7 @@ Log = Logger.new($stderr) unless defined?(Log)
 
 class AvailSpaceMonitor
   def hostname
-    @hostname ||= `hostname`.chomp
+    @hostname ||= `hostname`.chomp.gsub(".","_")
   end
   
   def diskfree
@@ -21,9 +21,9 @@ class AvailSpaceMonitor
   def send_metrics
     monitor = Graphiterb::GraphiteLogger.new(:iters => nil, :time => Settings.update_delay)
     loop do
-      diskfree.split("\n").grep(/^\/dev\//).each do |disk|
-        handle, size, spaceused, spacefree, percentfree, location = disk.split(/\s+/)
-        monitor.periodically do |metrics, iter, since|
+      monitor.periodically do |metrics, iter, since|
+        diskfree.split("\n").grep(/^\/dev\//).each do |disk|
+          handle, size, spaceused, spacefree, percentfree, location = disk.split(/\s+/)
           metrics << ["system.#{hostname}#{handle.gsub(/\//,'.')}.available", spacefree.to_i]
         end
       end
