@@ -2,6 +2,7 @@
 require 'rubygems'
 $: <<  File.dirname(__FILE__)+'/../lib'
 require 'graphiterb'
+require 'configliere'
 Configliere.use :commandline, :config_file
 
 Settings.read 'graphite.yaml'
@@ -31,5 +32,7 @@ class AvailSpaceMonitor
   end
   
 end
+
+Settings.die "Update delay is #{Settings.update_delay} seconds.  You probably want something larger." if Settings.update_delay < 60
 
 AvailSpaceMonitor.new.send_metrics
