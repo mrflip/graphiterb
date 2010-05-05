@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-$: << '/home/doncarlo/ics/graphiterb/lib/'
+$: << '../lib/'
 require 'rubygems'
 require 'graphiterb'
 require 'configliere'
