@@ -69,8 +69,6 @@ class FileMonitor
   def size_rate handle
     current_size = get_sizes(handle)[0]
     if current_size.nil?
-      current_size = @last_size[handle]
-      @last_size[handle] = 0
       return current_size
     end
     if current_size < @last_size[handle]
@@ -93,8 +91,9 @@ class FileMonitor
         handles.each do |handle|
           sizes = get_sizes(handle)
           @last_size[handle] = sizes[0] if @last_size[handle].nil?
+          rate = size_rate(handle)
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.current_file_size", sizes[0]] unless sizes.empty?
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.size_rate", size_rate(handle)]
+          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.size_rate", rate] unless rate.nil?
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.num_files", num_files(handle)]
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.avg_file_size", avg_size(handle)]
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.min_file_size", min_size(handle)]
