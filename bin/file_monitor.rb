@@ -68,6 +68,11 @@ class FileMonitor
 
   def size_rate handle
     current_size = get_sizes(handle)[0]
+    if current_size.nil?
+      current_size = @last_size[handle]
+      @last_size[handle] = 0
+      return current_size
+    end
     if current_size < @last_size[handle]
       @last_size[handle] = current_size
       return current_size
