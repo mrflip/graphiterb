@@ -25,7 +25,7 @@ class FileMonitor
   end
 
   def handles
-    @handles ||= `ls #{WORK_DIR}`.split("\n")
+    @handles = `ls #{WORK_DIR}`.split("\n")
     @handles.each{|handle| @handles.delete(handle) if !(`ls #{WORK_DIR + handle}`.split("\n").include?(date_today)) }
     return @handles
   end
