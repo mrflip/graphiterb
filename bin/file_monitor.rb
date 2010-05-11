@@ -32,7 +32,7 @@ class FileMonitor
     new_handles = []
     @handles.each do |handle| 
       current_file(handle) if @current_file[handle].nil? 
-      new_handles += [handle] if (`ls #{Settings.workdir + "/" + handle}`.split("\n").include?(date_today) || !(@current_file[handle].size.nil?)) }
+      new_handles += [handle] if (`ls #{Settings.workdir + "/" + handle}`.split("\n").include?(date_today) || !(@current_file[handle].size.nil?))
     end
     @handles = new_handles
     return @handles
