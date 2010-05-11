@@ -52,7 +52,7 @@ class FileMonitor
     @current_file[handle] ||= FileNameSize["",nil]
     file_list = files(handle).split("\n")
     if file_list.empty?
-      @current_file[handle].size = `ls -l #{Settings.workdir + "/" + handle + "/" + @current_file[handle].name}`.scan(/^[\-dlrwx]{10}\s\d\s\w+\s\w+\s+(\d+)/).flatten[0]
+      @current_file[handle].size = `ls -l #{Settings.workdir + "/" + handle + "/" + @current_file[handle].name}`.scan(/^[\-dlrwx]{10}\s\d\s\w+\s\w+\s+(\d+)/).flatten[0].to_i if @current_file[handle].name != ""
       return @current_file[handle] 
     end
     @current_file[handle].size, @current_file[handle].name = file_list[1].scan(/^[\-dlrwx]{10}\s\d\s\w+\s\w+\s+(\d+)\s\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\s([^\s]+)/).flatten
