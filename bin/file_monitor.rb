@@ -17,9 +17,9 @@ class FileMonitor
   FileNameSize = Struct.new(:name, :size)
 
   def initialize
-    return if handles.empty?
-    @last_size = Hash.new
     @current_file = Hash.new
+    @last_size = Hash.new
+    return if handles.empty?
     handles.each{|handle| current_file(handle); @last_size[handle] = @current_file[handle].size }
   end
 
@@ -30,7 +30,10 @@ class FileMonitor
   def handles
     @handles = `ls #{Settings.workdir}`.split("\n")
     new_handles = []
-    @handles.each{|handle| new_handles += [handle] if (`ls #{Settings.workdir + "/" + handle}`.split("\n").include?(date_today) || !(@current_file[handle].size.nil?)) }
+    @handles.each do |handle| 
+      current_file(handle) if @current_file[handle].nil? 
+      new_handles += [handle] if (`ls #{Settings.workdir + "/" + handle}`.split("\n").include?(date_today) || !(@current_file[handle].size.nil?)) }
+    end
     @handles = new_handles
     return @handles
   end
