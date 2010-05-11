@@ -30,7 +30,7 @@ class FileMonitor
   def handles
     @handles = `ls #{Settings.workdir}`.split("\n")
     new_handles = []
-    @handles.each{|handle| new_handles += [handle] if `ls #{Settings.workdir + "/" + handle}`.split("\n").include?(date_today) }
+    @handles.each{|handle| new_handles += [handle] if (`ls #{Settings.workdir + "/" + handle}`.split("\n").include?(date_today) || !(@current_file[handle].size.nil?)) }
     @handles = new_handles
     return @handles
   end
@@ -111,10 +111,10 @@ class FileMonitor
           rate = size_rate(handle)
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.current_file_size", current_file(handle).size] unless current_file(handle).size.nil?
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.size_rate", rate] unless rate.nil?
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.num_files", num_files(handle)]
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.avg_file_size", avg_size(handle)]
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.min_file_size", min_size(handle)]
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.max_file_size", max_size(handle)]
+          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.num_files", num_files(handle)] unless sizes.empty?
+          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.avg_file_size", avg_size(handle)] unless sizes.empty?
+          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.min_file_size", min_size(handle)] unless sizes.empty?
+          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.max_file_size", max_size(handle)] unless sizes.empty?
         end
       end
       sleep Settings.update_delay
