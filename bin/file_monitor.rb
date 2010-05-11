@@ -14,13 +14,11 @@ Log = Logger.new($stderr) unless defined?(Log)
 
 class FileMonitor
 
-  FileNameSize = Struct.new(:name, :size)
-
   def initialize
     @current_file = Hash.new
     @last_size = Hash.new
     return if handles.empty?
-    handles.each{|handle| current_file(handle); @last_size[handle] = @current_file[handle].size }
+    handles.each{|handle| current_file(handle); @last_size[handle] = current_file_size[handle] }
   end
 
   def date_today     
@@ -32,7 +30,7 @@ class FileMonitor
     new_handles = []
     @handles.each do |handle| 
       current_file(handle) if @current_file[handle].nil? 
-      new_handles += [handle] if (`ls #{Settings.workdir + "/" + handle}`.split("\n").include?(date_today) || !(@current_file[handle].size.nil?))
+      new_handles += [handle] if (`ls #{Settings.workdir + "/" + handle}`.split("\n").include?(date_today) || (current_file_size[handle] != 0))
     end
     @handles = new_handles
     return @handles
@@ -49,16 +47,17 @@ class FileMonitor
   end
 
   def current_file handle
-    @current_file[handle] ||= FileNameSize["",nil]
-    file_list = files(handle).split("\n")
-    if file_list.empty?
-      @current_file[handle].size = `ls -l #{Settings.workdir + "/" + handle + "/" + @current_file[handle].name}`.scan(/^[\-dlrwx]{10}\s\d\s\w+\s\w+\s+(\d+)/).flatten[0].to_i if @current_file[handle].name != ""
-      return @current_file[handle] 
-    end
-    @current_file[handle].size, @current_file[handle].name = file_list[1].scan(/^[\-dlrwx]{10}\s\d\s\w+\s\w+\s+(\d+)\s\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\s([^\s]+)/).flatten
-    @current_file[handle].name = date_today + "/" + @current_file[handle].name
-    @current_file[handle].size = @current_file[handle].size.to_i
+    @current_file[handle] ||= ""
+    file_list = `ls -1t #{Settings.workdir + "/" + handle + "/" + date_today}`.split("\n")
+    return @current_file[handle] if file_list.empty?
+    @current_file[handle] = date_today + "/" + file_list[0] if !(file_list[0].nil?)
     return @current_file[handle]
+  end
+  
+  def current_file_size handle
+    current_file(handle)
+    return 0 if @current_file[handle] == ""
+    return File.size(Settings.workdir + "/" + handle + "/" + @current_file[handle])
   end
 
   def num_files handle
@@ -88,15 +87,13 @@ class FileMonitor
   end
 
   def size_rate handle
-    if current_file(handle).size.nil?
-      return current_file(handle).size
+    return 0 if @current_file[handle] == ""
+    if current_file_size(handle) < @last_size[handle]
+      @last_size[handle] = current_file_size(handle)
+      return @last_size[handle]
     end
-    if current_file(handle).size < @last_size[handle]
-      @last_size[handle] = current_file(handle).size
-      return current_file(handle).size
-    end
-    rate = current_file(handle).size - @last_size[handle]
-    @last_size[handle] = current_file(handle).size
+    rate = current_file_size(handle) - @last_size[handle]
+    @last_size[handle] = current_file_size(handle)
     return rate
   end    
 
@@ -110,10 +107,10 @@ class FileMonitor
       monitor.periodically do |metrics, iter, since|
         handles.each do |handle|
           sizes = get_sizes(handle)
-          @last_size[handle] = sizes[0] if @last_size[handle].nil?
+          @last_size[handle] = current_file_size[handle] if @last_size[handle].nil?
           rate = size_rate(handle)
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.current_file_size", current_file(handle).size] unless current_file(handle).size.nil?
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.size_rate", rate] unless rate.nil?
+          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.current_file_size", current_file_size(handle)]
+          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.size_rate", rate]
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.num_files", num_files(handle)] unless sizes.empty?
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.avg_file_size", avg_size(handle)] unless sizes.empty?
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.min_file_size", min_size(handle)] unless sizes.empty?
