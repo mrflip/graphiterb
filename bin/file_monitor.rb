@@ -107,7 +107,7 @@ class FileMonitor
       monitor.periodically do |metrics, iter, since|
         handles.each do |handle|
           sizes = get_sizes(handle)
-          @last_size[handle] = current_file_size[handle] if @last_size[handle].nil?
+          @last_size[handle] = current_file_size(handle) if @last_size[handle].nil?
           rate = size_rate(handle)
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.current_file_size", current_file_size(handle)]
           metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.size_rate", rate]
