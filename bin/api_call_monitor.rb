@@ -18,7 +18,7 @@ class ApiCallMonitor
   end
 
   def total_calls api
-    total_calls = `cat /slice/www/apeyeye/current/log/apeyeye-access.log | grep 'GET /soc/net/tw/#{api}' | wc -l`
+    total_calls = `cat /var/www/apeyeye/shared/log/apeyeye-access.log | grep 'GET /soc/net/tw/#{api}' | wc -l`
     @current_calls[api]=total_calls
 
     return @current_calls[api]
