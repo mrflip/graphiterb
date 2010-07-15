@@ -106,7 +106,6 @@ class FileMonitor
           metrics << ["#{hostname_handle}.avg_file_size",     avg_size(handle)]  unless sizes.empty?
           metrics << ["#{hostname_handle}.min_file_size",     min_size(handle)]  unless sizes.empty?
           metrics << ["#{hostname_handle}.max_file_size",     max_size(handle)]  unless sizes.empty?
-          puts metrics.map(&:inspect)
         end
       end
       sleep Settings.update_delay
