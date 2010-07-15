@@ -16,74 +16,63 @@ class FileMonitor
 
   def initialize
     @current_file = Hash.new
-    @last_size = Hash.new
-    return if handles.empty?
+    @last_size    = Hash.new
     handles.each{|handle| current_file(handle); @last_size[handle] = current_file_size(handle) }
   end
 
-  def date_today     
+  def today
     Time.now.strftime("%Y%m%d")
   end
 
   def handles
-    @handles = `ls #{Settings.workdir}`.split("\n")
-    new_handles = []
-    @handles.each do |handle| 
-      current_file(handle) if @current_file[handle].nil? 
-      new_handles += [handle] if (`ls #{Settings.workdir + "/" + handle}`.split("\n").include?(date_today) || (current_file_size(handle) != 0))
+    @handles = []
+    Dir[work_path('*')].sort.each do |full_handle_path|
+      handle = File.basename(full_handle_path)
+      current_file(handle) if @current_file[handle].nil?
+      @handles << handle if ( (not Dir[work_path(handle,today)].empty?) || (current_file_size(handle) != 0) )
     end
-    @handles = new_handles
-    return @handles
+    @handles
+  end
+
+  def work_path *paths
+    File.join(Settings.workdir, *paths)
   end
 
   def files handle
-    `ls -lt #{Settings.workdir + "/" + handle + "/" + date_today}`
-  end
-
-  def get_sizes handle
-    size_list = files(handle).scan(/^[\-dlrwx]{10}\s\d\s\w+\s\w+\s+(\d+)/).flatten
-    return size_list if size_list.empty?
-    size_list.map{|size| size.to_i}
+    Dir[work_path(handle, today, '*')].reject{|f| File.directory?(f) }.sort
   end
 
   def current_file handle
-    @current_file[handle] ||= ""
-    file_list = `ls -1t #{Settings.workdir + "/" + handle + "/" + date_today}`.split("\n")
-    return @current_file[handle] if file_list.empty?
-    @current_file[handle] = date_today + "/" + file_list[0] if !(file_list[0].nil?)
-    return @current_file[handle]
+    @current_file[handle] = self.files(handle).last || @current_file[handle]
   end
-  
+
+  def get_sizes handle
+    files(handle).map{|file| File.size(file) rescue nil }.compact
+  end
+
   def current_file_size handle
-    current_file(handle)
-    return 0 if @current_file[handle] == ""
-    return File.size(Settings.workdir + "/" + handle + "/" + @current_file[handle])
+    file = current_file(handle) or return 0
+    File.size(file)
   end
 
   def num_files handle
-    sizes = get_sizes(handle)
-    return 0 if sizes.empty?
-    sizes.length
+    get_sizes(handle).length
   end
 
   def avg_size handle
     sizes = get_sizes(handle)
-    return 0 if sizes.empty?
-    tot_size = 0
-    sizes.each{|size| tot_size += size}
+    tot_size = sizes.inject(0){|tot, size| tot += size}
     return (tot_size/sizes.length).to_i
   end
-  
+
   def max_size handle
     sizes = get_sizes(handle)
-    return 0 if sizes.empty?
-    sizes.max
+    sizes.empty? ? 0 : sizes.max
   end
-  
+
   def min_size handle
     sizes = get_sizes(handle)
-    return 0 if sizes.empty?
-    sizes.min
+    sizes.empty? ? 0 : sizes.min
   end
 
   def size_rate handle
@@ -95,7 +84,7 @@ class FileMonitor
     rate = current_file_size(handle) - @last_size[handle]
     @last_size[handle] = current_file_size(handle)
     return rate
-  end    
+  end
 
   def hostname
     @hostname ||= `hostname`.chomp.gsub(".","_")
@@ -104,17 +93,20 @@ class FileMonitor
   def send_metrics
     monitor = Graphiterb::GraphiteLogger.new(:iters => nil, :time => Settings.update_delay)
     loop do
+      metrics = []
       monitor.periodically do |metrics, iter, since|
         handles.each do |handle|
+          hostname_handle = "scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}"
           sizes = get_sizes(handle)
-          @last_size[handle] = current_file_size(handle) if @last_size[handle].nil?
+          @last_size[handle] ||= current_file_size(handle)
           rate = size_rate(handle)
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.current_file_size", current_file_size(handle)]
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.size_rate", rate]
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.num_files", num_files(handle)] unless sizes.empty?
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.avg_file_size", avg_size(handle)] unless sizes.empty?
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.min_file_size", min_size(handle)] unless sizes.empty?
-          metrics << ["scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}.max_file_size", max_size(handle)] unless sizes.empty?
+          metrics << ["#{hostname_handle}.current_file_size", current_file_size(handle)]
+          metrics << ["#{hostname_handle}.size_rate",         rate]
+          metrics << ["#{hostname_handle}.num_files",         num_files(handle)] unless sizes.empty?
+          metrics << ["#{hostname_handle}.avg_file_size",     avg_size(handle)]  unless sizes.empty?
+          metrics << ["#{hostname_handle}.min_file_size",     min_size(handle)]  unless sizes.empty?
+          metrics << ["#{hostname_handle}.max_file_size",     max_size(handle)]  unless sizes.empty?
+          puts metrics.map(&:inspect)
         end
       end
       sleep Settings.update_delay
