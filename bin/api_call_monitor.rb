@@ -8,6 +8,7 @@ Configliere.use :commandline, :config_file
 Settings.read 'graphite.yaml'
 Settings.resolve!
 Log = Logger.new($stderr) unless defined?(Log)
+WC_EXEC = '/usr/bin/wc'
 
 class ApiCallMonitor
 
@@ -18,7 +19,7 @@ class ApiCallMonitor
   end
 
   def total_calls api
-    total_calls = `cat /var/www/apeyeye/shared/log/apeyeye-access.log | grep 'GET /soc/net/tw/#{api}' | wc -l`
+    total_calls = `cat /var/www/apeyeye/shared/log/apeyeye-access.log | grep 'GET /soc/net/tw/#{api}' | #{WC_EXEC} -l`
     @current_calls[api]=total_calls
 
     return @current_calls[api]
@@ -50,6 +51,7 @@ class ApiCallMonitor
 
 end
 
-Settings.die "Update delay is #{Settings.update_delay} seconds.  You probably want something larger." if Settings.update_delay < 60
+warn "Update delay is #{Settings.update_delay} seconds.  You probably want something larger: some of these checks are data-intensive" if Settings.update_delay < 60
+Settings.die "Update delay is #{Settings.update_delay} seconds.  You need to radio in at least as often as /usr/local/share/graphite/conf/storage-schemas says -- this is typically 5 minutes." if Settings.update_delay >= 300
 
 ApiCallMonitor.new.send_metrics
