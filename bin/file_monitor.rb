@@ -1,125 +1,118 @@
 #!/usr/bin/env ruby
-$: << '../lib/'
+$: << File.dirname(__FILE__)+'/../lib/'
 require 'rubygems'
 require 'graphiterb'
+require 'graphiterb/graphite_logger'
 require 'configliere'
+require 'active_support'
 Configliere.use :commandline, :config_file, :define
 
 #
 # Usage:
 #
-#    nohup ~/ics/backend/graphiterb/bin/file_monitor.rb --workdir=/data/ripd/com.tw --update_delay=60 > /data/log/file_monitor.log 2>&1 &
-#
+#    nohup ~/ics/backend/graphiterb/bin/file_monitor.rb --work_dir=/data/ripd/com.tw --carbon_server=whatever --update_delay=120 > /data/log/file_monitor.log 2>&1 &
 #
 Settings.read 'graphite.yaml'
-Settings.define :workdir, :description => "Base directory where scrapers store files. (Ex: /data/ripd/com.tw)", :default => "/data/ripd/com.tw"
+Settings.define :work_dir, :description => "Base directory where scrapers store files. (Ex: /data/ripd/com.tw)", :required => true
 Settings.resolve!
 
-# WORK_DIR = '/data/ripd/com.tw/'
 Log = Logger.new($stderr) unless defined?(Log)
+WC_EXEC = '/usr/bin/wc'
 
-class FileMonitor
+class FilePool
+  # Path to sample for files
+  attr_accessor :path
+  # wildcard sequence for files under the current directory
+  attr_accessor :glob
+  # A recent file was modified within this window
+  attr_accessor :recent_window
+  # Only consider the last this-many files
+  MAX_FILES = 30
 
-  def initialize
-    @current_file = Hash.new
-    @last_size    = Hash.new
-    handles.each{|handle| current_file(handle); @last_size[handle] = current_file_size(handle) }
+  def initialize path, glob='**/*', options={}
+    self.path      = path
+    self.glob      = glob
   end
 
-  def today
-    Time.now.strftime("%Y%m%d")
+  # Name for this pool, suitable for inclusion in a metrics handle
+  def name
+    path.gsub(/\./,'_').gsub(%r{/}, '.').gsub(%r{(^\.|\.$)},'')
   end
 
-  def handles
-    @handles = []
-    Dir[work_path('*')].sort.each do |full_handle_path|
-      handle = File.basename(full_handle_path)
-      current_file(handle) if @current_file[handle].nil?
-      @handles << handle if ( (not Dir[work_path(handle,today)].empty?) || (current_file_size(handle) != 0) )
-    end
-    @handles
+  #
+  # Lists all files in the pool
+  # @param filter_block files only keeps filenames that pass this filter
+  #
+  def files &filter_block
+    Dir[File.join(path, glob)].
+      reject{|f| File.directory?(f) }.
+      sort.reverse[0..MAX_FILES].
+      select(&filter_block)
   end
 
-  def work_path *paths
-    File.join(Settings.workdir, *paths)
+  def num_files &filter_block
+    files(&filter_block).count
   end
 
-  def files handle
-    Dir[work_path(handle, today, '*')].reject{|f| File.directory?(f) }.sort
+  def sizes &filter_block
+    files(&filter_block).map{|f| File.size(f) rescue nil }.compact
+  end
+  def size &filter_block
+    sizes(&filter_block).sum
+  end
+  def avg_size &filter_block
+    sizes(&filter_block).sum.to_f / num_files(&filter_block).to_f
   end
 
-  def current_file handle
-    @current_file[handle] = self.files(handle).last || @current_file[handle]
+  def lines_in_result_of command, *args
+    begin
+      escaped_args = args.map{|f| "'#{f}'" }
+      result = `#{command} #{escaped_args.join(" ")}`.chomp
+      result.split(/[\r\n]+/)
+    rescue RuntimeError => e ; warn(e.backtrace, e) ; return nil ; end
   end
 
-  def get_sizes handle
-    files(handle).map{|file| File.size(file) rescue nil }.compact
+  def line_counts &filter_block
+    files  = files(&filter_block) ; return 0 if files.blank?
+    result = lines_in_result_of(WC_EXEC, '-l', *files) or return 0
+    counts = result.map{|wc| wc =~ /^\s*(\d+)\s+/ and $1 }.compact
+    counts.map(&:to_i).sum
   end
 
-  def current_file_size handle
-    file = current_file(handle) or return 0
-    File.size(file)
+  def self.recent? file
+    (Time.now - File.mtime(file)) < 1.hour
   end
-
-  def num_files handle
-    get_sizes(handle).length
+  def self.recency_filter
+    Proc.new{|file| recent?(file) }
   end
-
-  def avg_size handle
-    sizes = get_sizes(handle)
-    tot_size = sizes.inject(0){|tot, size| tot += size}
-    return (tot_size/sizes.length).to_i
-  end
-
-  def max_size handle
-    sizes = get_sizes(handle)
-    sizes.empty? ? 0 : sizes.max
-  end
-
-  def min_size handle
-    sizes = get_sizes(handle)
-    sizes.empty? ? 0 : sizes.min
-  end
-
-  def size_rate handle
-    return 0 if @current_file[handle] == ""
-    if current_file_size(handle) < @last_size[handle]
-      @last_size[handle] = current_file_size(handle)
-      return @last_size[handle]
-    end
-    rate = current_file_size(handle) - @last_size[handle]
-    @last_size[handle] = current_file_size(handle)
-    return rate
-  end
-
-  def hostname
-    @hostname ||= `hostname`.chomp.gsub(".","_")
-  end
-
-  def send_metrics
-    monitor = Graphiterb::GraphiteLogger.new(:iters => nil, :time => Settings.update_delay)
-    loop do
-      metrics = []
-      monitor.periodically do |metrics, iter, since|
-        handles.each do |handle|
-          hostname_handle = "scraper.#{hostname}.com_tw.#{handle.chomp.gsub(".","_")}"
-          sizes = get_sizes(handle)
-          @last_size[handle] ||= current_file_size(handle)
-          rate = size_rate(handle)
-          metrics << ["#{hostname_handle}.current_file_size", current_file_size(handle)]
-          metrics << ["#{hostname_handle}.size_rate",         rate]
-          metrics << ["#{hostname_handle}.num_files",         num_files(handle)] unless sizes.empty?
-          metrics << ["#{hostname_handle}.avg_file_size",     avg_size(handle)]  unless sizes.empty?
-          metrics << ["#{hostname_handle}.min_file_size",     min_size(handle)]  unless sizes.empty?
-          metrics << ["#{hostname_handle}.max_file_size",     max_size(handle)]  unless sizes.empty?
-        end
-      end
-      sleep Settings.update_delay
-    end
-  end
-
 end
 
-Settings.die "Update delay is #{Settings.update_delay} seconds.  You probably want something larger." if Settings.update_delay < 60
+class FileMonitor < Graphiterb::GraphiteSystemLogger
+  attr_accessor :path
+  attr_accessor :pools
 
-FileMonitor.new.send_metrics
+  def initialize *args
+    super *args
+    self.path = Settings.work_dir
+    self.pools = {}
+    populate_pools!
+  end
+
+  def populate_pools!
+    Dir[File.join(path, '*')].select{|d| File.directory?(d) }.each do |dir|
+      self.pools[dir] ||= FilePool.new(dir, '20*/**/*.tsv')
+    end
+  end
+
+  def get_metrics metrics, iter, since
+    recent = FilePool.recency_filter
+    pools.each do |pool_path, pool|
+      metrics << [scope_name(pool.name, hostname, 'active_files'),     pool.num_files(&recent) ]
+      metrics << [scope_name(pool.name, hostname, 'active_file_size'), pool.size(&recent) ]
+      metrics << [scope_name(pool.name, hostname, 'line_counts'),      pool.line_counts(&recent) ]
+    end
+  end
+end
+
+Settings.die "Update delay is #{Settings.update_delay} seconds.  You probably want something larger: some of the metrics are expensive." if Settings.update_delay < 1
+FileMonitor.new('scraper', :iters => nil, :time => Settings.update_delay).run!

@@ -10,5 +10,6 @@ Settings.define :on_error_delay, :default => 0.1,         :description => "How l
 
 require 'graphiterb/graphite_sender'
 module Graphiterb
-  autoload :GraphiteLogger, 'graphiterb/graphite_logger'
+  autoload :GraphiteLogger,       'graphiterb/graphite_logger'
+  autoload :GraphiteSystemLogger, 'graphiterb/graphite_system_logger'
 end
