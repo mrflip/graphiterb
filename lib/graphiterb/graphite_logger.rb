@@ -31,11 +31,10 @@ module Graphiterb
 
     def run!
       loop do
-        puts "loop #{Time.now}"
         periodically do |metrics, iter, since|
           get_metrics metrics, iter, since
         end
-        sleep 5
+        sleep 1
       end
     end
   end

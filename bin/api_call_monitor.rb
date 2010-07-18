@@ -10,48 +10,51 @@ Settings.resolve!
 Log = Logger.new($stderr) unless defined?(Log)
 WC_EXEC = '/usr/bin/wc'
 
-class ApiCallMonitor
+class ApiCallMonitor < Graphiterb::GraphiteLogger
+  API_CALLS_TO_MONITOR   = %w(trstrank wordbag influence conversation)
+  ERROR_CODES_TO_MONITOR = %w(4.. 5..)
 
-  def initialize
-    @current_calls=Hash.new
-    @prev_total=Hash.new
-    @apis= %w(trstrank wordbag influence conversation)
+  def initialize *args
+    super *args
+    @current_total = Hash.new
+    @prev_total    = Hash.new
   end
 
-  def total_calls api
+  def calls api
     total_calls = `cat /var/www/apeyeye/shared/log/apeyeye-access.log | grep 'GET /soc/net/tw/#{api}' | #{WC_EXEC} -l`
-    @current_calls[api]=total_calls
-
-    return @current_calls[api]
+    @current_total[api] = total_calls
   end
 
-  def rate api
-    @prev_total[api]=@current_calls[api] if @prev_total[api].nil?
-    rate = @current_calls[api].to_i - @prev_total[api].to_i
-    @prev_total[api]=@current_calls[api]
-    return rate
+  def errors error_code
+    log_cat =  `cat /var/www/apeyeye/shared/log/apeyeye-access.log | grep 'GET /soc/net/tw/.*HTTP/1\.[0-1]..#{error_code}' | #{WC_EXEC} -l`
+    @current_total[error_code] = log_cat
+  end
+
+  def rate item
+    @prev_total[item] ||= @current_total[item]
+    rate                = @current_total[item].to_i - @prev_total[item].to_i
+    @prev_total[item]   = @current_total[item]
+    [0, rate].max
   end
 
   def hostname
     @hostname ||= `hostname`.chomp.gsub(".","_")
   end
 
-  def send_metrics
-    monitor = Graphiterb::GraphiteLogger.new(:iters => nil, :time => Settings.update_delay)
-    loop do
-      monitor.periodically do |metrics, iter, since|
-        @apis.each do |api|
-          total_calls(api)
-          metrics << ["apeyeye.#{hostname}.#{api}.accesses",rate(api)]
-        end
+  def get_metrics metrics, iter, since
+    API_CALLS_TO_MONITOR.each do |api|
+      calls(api)
+      metrics << [scope_name(hostname, api, 'accesses'), rate(api)]
     end
-      sleep Settings.update_delay
+    ERROR_CODES_TO_MONITOR.each do |code|
+      errors(code)
+      metrics << [scope_name(hostname, code.gsub('.','x'), 'errors'), rate(code)]
     end
   end
-
 end
+
 
 warn "Update delay is #{Settings.update_delay} seconds.  You probably want something larger: some of these checks are data-intensive" if Settings.update_delay < 60
 Settings.die "Update delay is #{Settings.update_delay} seconds.  You need to radio in at least as often as /usr/local/share/graphite/conf/storage-schemas says -- this is typically 5 minutes." if Settings.update_delay >= 300
 
-ApiCallMonitor.new.send_metrics
+ApiCallMonitor.new('apeyeye', :iters => nil, :time => Settings.update_delay).run!
