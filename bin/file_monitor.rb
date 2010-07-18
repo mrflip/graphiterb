@@ -5,6 +5,12 @@ require 'graphiterb'
 require 'configliere'
 Configliere.use :commandline, :config_file, :define
 
+#
+# Usage:
+#
+#    nohup ~/ics/backend/graphiterb/bin/file_monitor.rb --workdir=/data/ripd/com.tw --update_delay=60 > /data/log/file_monitor.log 2>&1 &
+#
+#
 Settings.read 'graphite.yaml'
 Settings.define :workdir, :description => "Base directory where scrapers store files. (Ex: /data/ripd/com.tw)", :default => "/data/ripd/com.tw"
 Settings.resolve!
