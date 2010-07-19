@@ -18,6 +18,7 @@ module Graphiterb
         @socket = TCPSocket.new(Settings.carbon_server, Settings.carbon_port)
       rescue StandardError => e
         Log.warn "Couldn't connect to server #{Settings.carbon_server} port #{Settings.carbon_port}: #{e.class} #{e}"
+        $stderr
       end
     end
 

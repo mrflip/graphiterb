@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 $: << File.dirname(__FILE__)+'/../lib/'
-require 'graphite'
+require 'graphiterb'
 Settings.define :work_dir, :description => "Base directory where scrapers store files. (Ex: /data/ripd/com.tw)", :required => true
-require 'graphite/graphite_script'
+require 'graphiterb/graphite_script'
 
 #
 # Usage:

@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 $: << File.dirname(__FILE__)+'/../lib/'
-require 'graphite'
-require 'graphite/graphite_script'
+require 'graphiterb'
+require 'graphiterb/graphite_script'
 
 WC_EXEC = '/usr/bin/wc'
 
 class ApiCallMonitor < Graphiterb::GraphiteLogger
-  API_CALLS_TO_MONITOR   = %w(trstrank wordbag influence conversation)
-  ERROR_CODES_TO_MONITOR = %w(4.. 5..)
+  API_CALLS_TO_MONITOR   = %w[trstrank wordbag influence conversation]
+  ERROR_CODES_TO_MONITOR = %w[4.. 5..]
 
   def initialize *args
     super *args
@@ -30,10 +30,6 @@ class ApiCallMonitor < Graphiterb::GraphiteLogger
     rate                = @current_total[item].to_i - @prev_total[item].to_i
     @prev_total[item]   = @current_total[item]
     [0, rate].max
-  end
-
-  def hostname
-    @hostname ||= `hostname`.chomp.gsub(".","_")
   end
 
   def get_metrics metrics, iter, since
