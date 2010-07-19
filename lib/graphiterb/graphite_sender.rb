@@ -43,8 +43,8 @@ module Graphiterb
 
     def send *metrics
       now = timestamp
-      message = metrics.map{|metric, val, ts| [metric, val, (ts||now)].join(" ") }.join("\n")
       safely do
+        message = metrics.map{|metric, val, ts| [metric, val, (ts||now)].join(" ") }.join("\n")+"\n"
         socket.puts(message)
         Log.info message.gsub(/\n+/, "\t")
       end

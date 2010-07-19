@@ -7,7 +7,7 @@ WC_EXEC = '/usr/bin/wc'
 
 class ApiCallMonitor < Graphiterb::GraphiteLogger
   API_CALLS_TO_MONITOR   = %w[trstrank wordbag influence conversation]
-  ERROR_CODES_TO_MONITOR = %w[4.. 5..]
+  ERROR_CODES_TO_MONITOR = %w[4.. 5.. 200]
 
   def initialize *args
     super *args
@@ -16,13 +16,13 @@ class ApiCallMonitor < Graphiterb::GraphiteLogger
   end
 
   def calls api
-    total_calls = `cat /var/www/apeyeye/shared/log/apeyeye-access.log | grep 'GET /soc/net/tw/#{api}' | #{WC_EXEC} -l`
-    @current_total[api] = total_calls
+    total_calls = `cat /var/www/apeyeye/shared/log/apeyeye-access.log | egrep 'GET /soc/net/tw/#{api}' | #{WC_EXEC} -l` rescue 0
+    @current_total[api] = total_calls.to_i
   end
 
   def errors error_code
-    log_cat =  `cat /var/www/apeyeye/shared/log/apeyeye-access.log | grep 'GET /soc/net/tw/.*HTTP/1\.[0-1]..#{error_code}' | #{WC_EXEC} -l`
-    @current_total[error_code] = log_cat
+    log_cat =  `cat /var/www/apeyeye/shared/log/apeyeye-access.log | egrep 'GET /soc/net/tw/.*HTTP/1\.[0-1]..#{error_code}' | #{WC_EXEC} -l` rescue 0
+    @current_total[error_code] = log_cat.to_i
   end
 
   def rate item
@@ -34,12 +34,12 @@ class ApiCallMonitor < Graphiterb::GraphiteLogger
 
   def get_metrics metrics, iter, since
     API_CALLS_TO_MONITOR.each do |api|
-      calls(api)
-      metrics << [scope_name(hostname, api, 'accesses'), rate(api)]
+      metrics << [scope_name(hostname, api, 'total_accesses'), calls(api)]
+      metrics << [scope_name(hostname, api, 'accesses'),       rate(api)]
     end
     ERROR_CODES_TO_MONITOR.each do |code|
-      errors(code)
-      metrics << [scope_name(hostname, code.gsub('.','x'), 'errors'), rate(code)]
+      metrics << [scope_name(hostname, code.gsub('.','x'), 'total_errors'), errors(code)]
+      metrics << [scope_name(hostname, code.gsub('.','x'), 'errors'),       rate(code)]
     end
   end
 end
