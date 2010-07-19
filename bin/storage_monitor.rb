@@ -1,38 +1,23 @@
 #!/usr/bin/env ruby
+$: << File.dirname(__FILE__)+'/../lib/'
 require 'rubygems'
-$: <<  File.dirname(__FILE__)+'/../lib'
-require 'graphiterb'
-require 'configliere'
-Configliere.use :commandline, :config_file
+require 'graphiterb/graphite_script'
 
-Settings.read 'graphite.yaml'
-Settings.resolve!
-Log = Logger.new($stderr) unless defined?(Log)
-
-class AvailSpaceMonitor
-  def hostname
-    @hostname ||= `hostname`.chomp.gsub(".","_")
-  end
-  
+class AvailSpaceMonitor < Graphiterb::GraphiteLogger
   def diskfree
-    @diskfree = `df`
+    `/bin/df`.chomp.split("\n").
+      grep(%r{^/dev/}).
+      map{|line| line.split(/\s+/) } rescue []
   end
-  
-  def send_metrics
-    monitor = Graphiterb::GraphiteLogger.new(:iters => nil, :time => Settings.update_delay)
-    loop do
-      monitor.periodically do |metrics, iter, since|
-        diskfree.split("\n").grep(/^\/dev\//).each do |disk|
-          handle, size, spaceused, spacefree, percentfree, location = disk.split(/\s+/)
-          metrics << ["system.#{hostname}#{handle.gsub(/\//,'.')}.available", spacefree.to_i]
-        end
-      end
-      sleep Settings.update_delay
+
+  def get_metrics metrics, iter, since
+    diskfree.each do |handle, size, spaceused, spacefree, percentfree, location|
+      metrics << ["system.#{hostname}#{handle.gsub(/\//,'.')}.available", spacefree.to_i]
     end
   end
-  
 end
 
-Settings.die "Update delay is #{Settings.update_delay} seconds.  You probably want something larger." if Settings.update_delay < 60
+warn "Update delay is #{Settings.update_delay} seconds.  You probably want something larger: some of the metrics are expensive." if Settings.update_delay < 30
+warn "Update delay is #{Settings.update_delay} seconds.  You probably want something smaller: need to report in faster than the value in the graphite/conf/storage-schemas." if Settings.update_delay >= 60
 
-AvailSpaceMonitor.new.send_metrics
+AvailSpaceMonitor.new('system').run!

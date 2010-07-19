@@ -9,6 +9,7 @@ module Graphiterb
 
     def initialize main_scope, *args
       super *args
+      self.time_interval ||= Settings.update_delay
       @sender     = GraphiteSender.new
       @main_scope = main_scope
     end

@@ -1,13 +1,8 @@
 #!/usr/bin/env ruby
-require 'rubygems'
-$: <<  File.dirname(__FILE__)+'/../lib'
-require 'graphiterb'
-require 'configliere'
-Configliere.use :commandline, :config_file
+$: << File.dirname(__FILE__)+'/../lib/'
+require 'graphite'
+require 'graphite/graphite_script'
 
-Settings.read 'graphite.yaml'
-Settings.resolve!
-Log = Logger.new($stderr) unless defined?(Log)
 WC_EXEC = '/usr/bin/wc'
 
 class ApiCallMonitor < Graphiterb::GraphiteLogger

@@ -1,37 +1,30 @@
 #!/usr/bin/env ruby
 $: << File.dirname(__FILE__)+'/../lib/'
-require 'rubygems'
-require 'graphiterb'
-require 'graphiterb/graphite_logger'
-require 'configliere'
-require 'active_support'
-Configliere.use :commandline, :config_file, :define
+require 'graphite'
+Settings.define :work_dir, :description => "Base directory where scrapers store files. (Ex: /data/ripd/com.tw)", :required => true
+require 'graphite/graphite_script'
 
 #
 # Usage:
 #
 #    nohup ~/ics/backend/graphiterb/bin/file_monitor.rb --work_dir=/data/ripd/com.tw --carbon_server=whatever --update_delay=120 > /data/log/file_monitor.log 2>&1 &
 #
-Settings.read 'graphite.yaml'
-Settings.define :work_dir, :description => "Base directory where scrapers store files. (Ex: /data/ripd/com.tw)", :required => true
-Settings.resolve!
 
-Log = Logger.new($stderr) unless defined?(Log)
 WC_EXEC = '/usr/bin/wc'
 
 class FilePool
   # Path to sample for files
   attr_accessor :path
   # wildcard sequence for files under the current directory
-  attr_accessor :glob
+  attr_accessor :filter_re
   # A recent file was modified within this window
   attr_accessor :recent_window
   # Only consider the last this-many files
   MAX_FILES = 30
 
-  def initialize path, glob='**/*', options={}
+  def initialize path, filter_re=/.*/, options={}
     self.path      = path
-    self.glob      = glob
+    self.filter_re = filter_re
   end
 
   # Name for this pool, suitable for inclusion in a metrics handle
@@ -44,8 +37,9 @@ class FilePool
   # @param filter_block files only keeps filenames that pass this filter
   #
   def files &filter_block
-    Dir[File.join(path, glob)].
+    Dir[File.join(path, '**/*')].
       reject{|f| File.directory?(f) }.
+      select{|f| f =~ filter_re }.
       sort.reverse[0..MAX_FILES].
       select(&filter_block)
   end
@@ -69,7 +63,7 @@ class FilePool
       escaped_args = args.map{|f| "'#{f}'" }
       result = `#{command} #{escaped_args.join(" ")}`.chomp
       result.split(/[\r\n]+/)
-    rescue RuntimeError => e ; warn(e.backtrace, e) ; return nil ; end
+    rescue StandardError => e ; warn(e.backtrace, e) ; return nil ; end
   end
 
   def line_counts &filter_block
@@ -100,19 +94,20 @@ class FileMonitor < Graphiterb::GraphiteSystemLogger
 
   def populate_pools!
     Dir[File.join(path, '*')].select{|d| File.directory?(d) }.each do |dir|
-      self.pools[dir] ||= FilePool.new(dir, '20*/**/*.tsv')
+      self.pools[dir] ||= FilePool.new(dir, %r{20\d*/.*\.(?:tsv|json|xml)})
     end
   end
 
   def get_metrics metrics, iter, since
     recent = FilePool.recency_filter
     pools.each do |pool_path, pool|
-      metrics << [scope_name(pool.name, hostname, 'active_files'),     pool.num_files(&recent) ]
-      metrics << [scope_name(pool.name, hostname, 'active_file_size'), pool.size(&recent) ]
+      metrics << [scope_name(pool.name, hostname, 'active_files'),     pool.num_files(&recent)   ]
+      metrics << [scope_name(pool.name, hostname, 'active_file_size'), pool.size(&recent)        ]
       metrics << [scope_name(pool.name, hostname, 'line_counts'),      pool.line_counts(&recent) ]
     end
   end
 end
 
-Settings.die "Update delay is #{Settings.update_delay} seconds.  You probably want something larger: some of the metrics are expensive." if Settings.update_delay < 1
+warn "Update delay is #{Settings.update_delay} seconds.  You probably want something larger: some of the metrics are expensive." if Settings.update_delay < 60
+warn "Update delay is #{Settings.update_delay} seconds.  You probably want something smaller: need to report in faster than the value in the graphite/conf/storage-schemas." if Settings.update_delay >= 300
 FileMonitor.new('scraper', :iters => nil, :time => Settings.update_delay).run!
