@@ -8,7 +8,7 @@ begin
     gem.summary = %Q{Fast Ubiquitous Dashboard Logs with Graphite (http://graphite.wikidot.com)}
     gem.description = %Q{Uses http://github.com/mrflip/configliere and http://graphite.wikidot.com}
     gem.email = "info@infochimps.org"
-    gem.homepage = "http://github.com/mrflip/graphiterb"
+    gem.homepage = "http://github.com/infochimps/graphiterb"
     gem.authors = ["Philip (flip) Kromer (@mrflip)"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
     gem.add_development_dependency "yard", ">= 0"
