@@ -5,14 +5,13 @@
 
 Gem::Specification.new do |s|
   s.name = %q{graphiterb}
-  s.version = "0.1.3"
+  s.version = "0.1.5"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Philip (flip) Kromer (@mrflip)"]
-  s.date = %q{2010-07-20}
+  s.date = %q{2010-08-16}
   s.description = %q{Uses http://github.com/mrflip/configliere and http://graphite.wikidot.com}
   s.email = %q{info@infochimps.org}
-  s.executables = ["run_servers.sh", "toy.rb", "storage_monitor.rb", "loadavg_graphite_sender.rb", "file_monitor.rb", "api_call_monitor.rb"]
   s.extra_rdoc_files = [
     "LICENSE",
      "README.textile"
@@ -25,12 +24,12 @@ Gem::Specification.new do |s|
      "README.textile",
      "Rakefile",
      "VERSION",
-     "bin/api_call_monitor.rb",
-     "bin/file_monitor.rb",
-     "bin/loadavg_graphite_sender.rb",
-     "bin/run_servers.sh",
-     "bin/storage_monitor.rb",
-     "bin/toy.rb",
+     "examples/api_call_monitor.rb",
+     "examples/file_monitor.rb",
+     "examples/loadavg_graphite_sender.rb",
+     "examples/run_servers.sh",
+     "examples/storage_monitor.rb",
+     "examples/toy.rb",
      "graphiterb.gemspec",
      "lib/graphiterb.rb",
      "lib/graphiterb/graphite_logger.rb",
@@ -48,7 +47,12 @@ Gem::Specification.new do |s|
   s.summary = %q{Fast Ubiquitous Dashboard Logs with Graphite (http://graphite.wikidot.com)}
   s.test_files = [
     "spec/graphiterb_spec.rb",
-     "spec/spec_helper.rb"
+     "spec/spec_helper.rb",
+     "examples/storage_monitor.rb",
+     "examples/api_call_monitor.rb",
+     "examples/loadavg_graphite_sender.rb",
+     "examples/toy.rb",
+     "examples/file_monitor.rb"
   ]
 
   if s.respond_to? :specification_version then
