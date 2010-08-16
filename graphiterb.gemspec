@@ -5,14 +5,14 @@
 
 Gem::Specification.new do |s|
   s.name = %q{graphiterb}
-  s.version = "0.1.2"
+  s.version = "0.1.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Philip (flip) Kromer (@mrflip)"]
-  s.date = %q{2010-07-19}
+  s.date = %q{2010-07-20}
   s.description = %q{Uses http://github.com/mrflip/configliere and http://graphite.wikidot.com}
   s.email = %q{info@infochimps.org}
-  s.executables = ["run_servers.sh", "storage_monitor.rb", "api_call_monitor.rb", "loadavg_graphite_sender.rb", "toy.rb", "file_monitor.rb"]
+  s.executables = ["run_servers.sh", "toy.rb", "storage_monitor.rb", "loadavg_graphite_sender.rb", "file_monitor.rb", "api_call_monitor.rb"]
   s.extra_rdoc_files = [
     "LICENSE",
      "README.textile"
@@ -41,7 +41,7 @@ Gem::Specification.new do |s|
      "spec/spec.opts",
      "spec/spec_helper.rb"
   ]
-  s.homepage = %q{http://github.com/mrflip/graphiterb}
+  s.homepage = %q{http://github.com/infochimps/graphiterb}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.7}
