@@ -74,7 +74,7 @@ class FilePool
   end
 
   def self.recent? file
-    (Time.now - File.mtime(file)) < 1.hour
+    (Time.now - File.mtime(file)) < 3600
   end
   def self.recency_filter
     Proc.new{|file| recent?(file) }
