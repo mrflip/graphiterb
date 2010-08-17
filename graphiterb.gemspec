@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{graphiterb}
-  s.version = "0.2.0"
+  s.version = "0.2.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Philip (flip) Kromer (@mrflip)"]
@@ -38,7 +38,6 @@ Gem::Specification.new do |s|
      "lib/graphiterb/script.rb",
      "lib/graphiterb/sender.rb",
      "lib/graphiterb/utils.rb",
-     "lib/graphiterb/utils/extensions.rb",
      "lib/graphiterb/utils/log.rb",
      "lib/graphiterb/utils/system.rb",
      "spec/graphiterb_spec.rb",
