@@ -1,5 +1,10 @@
 require 'graphiterb/utils'
 
+module Graphiterb
+  autoload :Monitors, 'graphiterb/monitors'
+  autoload :Sender,   'graphiterb/sender'
+end
+
 Settings.use :define, :config_file
 
 Settings.define :log,            :default => STDOUT,      :description => "Log output for Graphiterb"
@@ -9,8 +14,3 @@ Settings.define :update_delay,   :default => 30,          :description => "How l
 Settings.define :on_error_delay, :default => 0.1,         :description => "How long to wait on connect errors", :required => true, :type => Float
 
 Settings.read '/etc/graphiterb/graphiterb.yaml' if File.exist? '/etc/graphiterb/graphiterb.yaml'
-
-module Graphiterb
-  autoload :Monitors, 'graphiterb/monitors'
-  autoload :Sender,   'graphiterb/sender'
-end
