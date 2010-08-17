@@ -1,23 +1,15 @@
 module Graphiterb
-  #
-  # @example:
-  #   # in initialize, perhaps
-  #   self.sender = GraphiteSender
-  #
-  #   # ... somewhere else ...
-  #   sender.send( ['webserver.pages', pages_this_hour], ['webserver.errors', errors_this_hour] )
-  #
-  class GraphiteSender
+  class Sender
     def initialize
       open!
     end
 
     def open!
       begin
-        Log.warn "Connecting to server #{Settings.carbon_server} port #{Settings.carbon_port}"
+        Graphiterb.log.warn "Connecting to server #{Settings.carbon_server} port #{Settings.carbon_port}"
         @socket = TCPSocket.new(Settings.carbon_server, Settings.carbon_port)
       rescue StandardError => e
-        Log.warn "Couldn't connect to server #{Settings.carbon_server} port #{Settings.carbon_port}: #{e.class} #{e}"
+        Graphiterb.log.warn "Couldn't connect to server #{Settings.carbon_server} port #{Settings.carbon_port}: #{e.class} #{e}"
         $stderr
       end
     end
@@ -30,7 +22,7 @@ module Graphiterb
       begin
         block.call
       rescue StandardError => e
-        Log.warn "Sleeping #{Settings.on_error_delay}: #{e.class} #{e}"
+        Graphiterb.log.warn "Sleeping #{Settings.on_error_delay}: #{e.class} #{e}"
         sleep Settings.on_error_delay
         @socket = nil
         return nil
@@ -46,7 +38,7 @@ module Graphiterb
       safely do
         message = metrics.map{|metric, val, ts| [metric, val, (ts||now)].join(" ") }.join("\n")+"\n"
         socket.puts(message)
-        Log.info message.gsub(/\n+/, "\t")
+        Graphiterb.log.info message.gsub(/\n+/, "\t")
       end
     end
   end
