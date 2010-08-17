@@ -1,9 +1,9 @@
 require 'rubygems'
 require 'socket'
 require 'configliere'
+require 'active_support'
 
 require 'graphiterb/utils/log'
-require 'graphiterb/utils/extensions'
 
 module Graphiterb
 
