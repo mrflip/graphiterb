@@ -2,6 +2,7 @@ module Graphiterb
   module Monitors
 
     autoload :DiskSpace,      'graphiterb/monitors/disk_space'
+    autoload :System,         'graphiterb/monitors/system'
     autoload :DirectoryTree,  'graphiterb/monitors/directory_tree'
 
     # Accepts a lightweight call every iteration.
