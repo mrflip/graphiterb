@@ -33,25 +33,31 @@ module Graphiterb
 
       def memory lines
         lines.each do |line|
-          next unless line =~ /^Mem: *\d+k *total, *(\d+)k *used, *(\d+)k *free/
-          return [$1, $2].map(&:to_i)
+          next unless line =~ /^Mem: *(\d+)k *total, *(\d+)k *used, *(\d+)k *free/
+          total = $1.to_f
+          return [$2, $3].map do |bytes|
+            bytes.to_f / total rescue 0.0
+          end
         end
         [0,0]
       end
 
       def swap lines
         lines.each do |line|
-          next unless line =~ /^Swap: *\d+k *total, *(\d+)k *used, *(\d+)k *free/
-          return [$1, $2].map(&:to_i)
+          next unless line =~ /^Swap: *(\d+)k *total, *(\d+)k *used, *(\d+)k *free/
+          total = $1.to_f
+          return [$2, $3].map do |bytes|
+            bytes.to_f / total rescue 0.0
+          end
         end
         [0,0]
       end
 
-
       def get_metrics metrics, since
-        df.each do |handle, size, spaceused, spacefree, percentfree, location|
+        df.each do |handle, size, spaceused, spacefree, percentused, location|
           disk_name = handle.gsub(/^\//, '').split('/')
-          metrics << [scope(hostname, disk_name, 'available'), spacefree.to_i]
+          percent_free = (100.0 * spaceused.to_f / (spaceused.to_f + spacefree.to_f)) rescue 0.0
+          metrics << [scope(hostname, disk_name, 'available'), percent_free]
         end
 
         lines = top
