@@ -36,7 +36,7 @@ module Graphiterb
           next unless line =~ /^Mem: *(\d+)k *total, *(\d+)k *used, *(\d+)k *free/
           total = $1.to_f
           return [$2, $3].map do |bytes|
-            bytes.to_f / total rescue 0.0
+            100.0 * (bytes.to_f / total) rescue 0.0
           end
         end
         [0,0]
@@ -47,7 +47,7 @@ module Graphiterb
           next unless line =~ /^Swap: *(\d+)k *total, *(\d+)k *used, *(\d+)k *free/
           total = $1.to_f
           return [$2, $3].map do |bytes|
-            bytes.to_f / total rescue 0.0
+            100.0 * (bytes.to_f / total) rescue 0.0
           end
         end
         [0,0]
