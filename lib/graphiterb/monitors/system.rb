@@ -56,7 +56,7 @@ module Graphiterb
       def get_metrics metrics, since
         df.each do |handle, size, spaceused, spacefree, percentused, location|
           disk_name = handle.gsub(/^\//, '').split('/')
-          percent_free = (100.0 * spaceused.to_f / (spaceused.to_f + spacefree.to_f)) rescue 0.0
+          percent_free = (100.0 * spacefree.to_f / (spaceused.to_f + spacefree.to_f)) rescue 0.0
           metrics << [scope(hostname, disk_name, 'available'), percent_free]
         end
 
