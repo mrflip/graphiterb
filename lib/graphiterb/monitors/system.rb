@@ -49,7 +49,6 @@ module Graphiterb
 
 
       def get_metrics metrics, since
-        puts '=' * 80
         df.each do |handle, size, spaceused, spacefree, percentfree, location|
           disk_name = handle.gsub(/^\//, '').split('/')
           metrics << [scope(hostname, disk_name, 'available'), spacefree.to_i]
@@ -58,15 +57,18 @@ module Graphiterb
         lines = top
         
         metrics << [scope(hostname, 'cpu', 'avg_usage'),   cpu(lines)]
-        metrics << [scope(hostname, 'processes', 'count'), processes(lines)]
+
+        proc_total, proc_running = processes(lines)
+        metrics << [scope(hostname, 'processes', 'total'),   proc_total   ]
+        metrics << [scope(hostname, 'processes', 'running'), proc_running ]
 
         mem_used, mem_free = memory(lines)
         swap_used, swap_free = swap(lines)
         
-        metrics << [scope(hostname, 'memory', 'used'), mem_used ]
-        metrics << [scope(hostname, 'memory', 'free'), mem_free ]
-        metrics << [scope(hostname, 'swap', 'used'),   swap_used]
-        metrics << [scope(hostname, 'swap', 'free'),   swap_free]
+        metrics << [scope(hostname, 'memory', 'used'), mem_used  ]
+        metrics << [scope(hostname, 'memory', 'free'), mem_free  ]
+        metrics << [scope(hostname, 'swap', 'used'),   swap_used ]
+        metrics << [scope(hostname, 'swap', 'free'),   swap_free ]
       end
       
     end
