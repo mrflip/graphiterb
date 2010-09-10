@@ -34,6 +34,7 @@ module Graphiterb
     end
 
     def send *metrics
+      return if metrics.blank?
       now = timestamp
       safely do
         message = metrics.map{|metric, val, ts| [metric, val, (ts||now)].join(" ") }.join("\n")+"\n"
