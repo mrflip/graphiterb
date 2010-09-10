@@ -4,6 +4,7 @@ module Graphiterb
     autoload :DiskSpace,      'graphiterb/monitors/disk_space'
     autoload :System,         'graphiterb/monitors/system'
     autoload :DirectoryTree,  'graphiterb/monitors/directory_tree'
+    autoload :AccumulationsConsumer, 'graphiterb/monitors/accumulations_consumer'
 
     # Accepts a lightweight call every iteration.
     #
