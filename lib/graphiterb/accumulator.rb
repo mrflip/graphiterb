@@ -20,10 +20,14 @@ module Graphiterb
     # The Redis database.
     attr_accessor :redis
 
-    # The Redis namespace used for the accumulators.
+    # The name of the Redis namespace (a string) in which
+    # accumulations are stored (defaults to 'graphiterb')
+    attr_accessor :namespace
+
+    # The Redis namespace (an object) used for the accumulators.
     attr_accessor :accumulators
 
-    # The top-level scope under which to accumulate.
+    # The top-level Graphite scope inserted for each record.
     attr_accessor :main_scope
 
     # Provides methods for finding out about the node this code is
@@ -34,6 +38,11 @@ module Graphiterb
     #
     # Takes the same options as Redis.new.
     #
+    # Also takes the :namespace option to change where the
+    # accumulations are stored.  Different applications can use
+    # different accumulators with different namespaces in a single,
+    # shared Redis.
+    #
     # @param [String] main_scope
     # @param [Hash] options
     def initialize main_scope, options={}
@@ -41,7 +50,8 @@ module Graphiterb
       require 'redis-namespace'
       @main_scope   = main_scope
       @redis        = Redis.new(options)
-      @accumulators = Redis::Namespace.new('graphiterb_accumulators', :redis => redis)
+      @namespace    = options[:namespace] || 'graphiterb'
+      @accumulators = Redis::Namespace.new(namespace, :redis => redis)
     end
 
     # Increment the Graphite target +args+ by the given +amount+.

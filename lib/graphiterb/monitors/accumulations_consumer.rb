@@ -8,6 +8,10 @@ module Graphiterb
       # The Redis database.
       attr_accessor :redis
 
+      # The name of the Redis namespace (a string) in which
+      # accumulations are stored (defaults to 'graphiterb')
+      attr_accessor :namespace
+
       # The Redis namespace used for the accumulators.
       attr_accessor :accumulators
 
@@ -20,6 +24,10 @@ module Graphiterb
       # Options are passed to Redis.new as well as
       # Graphiterb::Monitors::PeriodicMonitor.
       #
+      # Include the :namespace option to tell this consumer which
+      # Redis namespace to consume keys from (defaults to
+      # 'graphiterb').
+      #
       # Include the :regexp option if you want this monitor to only
       # consume keys corresponding to Graphite targets which match the
       # regexp.  This is useful for having multiple
@@ -29,9 +37,10 @@ module Graphiterb
         require 'redis'
         require 'redis-namespace'
         @redis        = Redis.new(options)
-        @accumulators = Redis::Namespace.new('graphiterb_accumulators', :redis => @redis)
+        @namespace    = options[:namespace] || 'graphiterb'
+        @accumulators = Redis::Namespace.new(namespace, :redis => @redis)
         @regexp       = options[:regexp] || /.*/
-        super('fake_scope', options)
+        super('fake_scope', options) # FIXME shouldn't have to use a fake scope
       end
 
       # Uses Redis' +getset+ call to retrieve total accumulated counts
