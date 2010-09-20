@@ -54,7 +54,7 @@ module Graphiterb
         self.current_iter  = 0
         self.options       = options
         self.time_interval = options[:time]  || 30 
-        self.iter_interval = options[:iters] || 30 
+        self.iter_interval = options[:iters] || 30
       end
 
       # The Graphiterb::Sender used to communicate with the Graphite
@@ -137,7 +137,7 @@ module Graphiterb
       # last ran and insert metrics into the array.")
       #
       # @param [Array<String>] metrics
-      # @param [Time] since the last time the monitor ran
+      # @param [Float] since the number of seconds since the last time the monitor ran
       def get_metrics metrics, since
         raise Graphiterb::NotImplementedError.new("Override the get_metrics method of the #{self.class} class")
       end
