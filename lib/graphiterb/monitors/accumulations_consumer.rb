@@ -35,7 +35,11 @@ module Graphiterb
       # frequencies tracking different Graphite target families.
       def initialize options={}
         require 'redis'
-        require 'redis-namespace'
+        begin
+          require 'redis-namespace'
+        rescue LoadError
+          require 'redis/namespace'
+        end
         @redis        = Redis.new(options)
         @namespace    = options[:namespace] || 'graphiterb'
         @accumulators = Redis::Namespace.new(namespace, :redis => @redis)

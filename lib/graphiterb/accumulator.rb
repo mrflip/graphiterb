@@ -47,7 +47,11 @@ module Graphiterb
     # @param [Hash] options
     def initialize main_scope, options={}
       require 'redis'
-      require 'redis-namespace'
+      begin
+        require 'redis-namespace'
+      rescue LoadError
+        require 'redis/namespace'
+      end
       @main_scope   = main_scope
       @redis        = Redis.new(options)
       @namespace    = options[:namespace] || 'graphiterb'
