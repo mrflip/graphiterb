@@ -62,6 +62,7 @@ module Graphiterb
         interval              = now - last_report_timestamp
 
         accumulators.keys.each do |target|
+          next if target == report_timestamp_key
           next unless regexp && regexp =~ target
           current_count = accumulators.getset(target, 0) rescue 0.0
 
