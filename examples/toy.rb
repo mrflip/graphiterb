@@ -11,4 +11,4 @@ class ToyMonitor < Graphiterb::Monitors::PeriodicMonitor
   end
 end
 
-ToyMonitor.new('toy').run!
+ToyMonitor.new('toy').run! if $0 == __FILE__

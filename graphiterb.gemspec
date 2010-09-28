@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{graphiterb}
-  s.version = "0.2.5"
+  s.version = "0.2.11"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Philip (flip) Kromer (@mrflip)"]
-  s.date = %q{2010-08-18}
+  s.date = %q{2010-09-22}
   s.description = %q{Uses http://github.com/mrflip/configliere and http://graphite.wikidot.com}
   s.email = %q{info@infochimps.org}
   s.extra_rdoc_files = [
@@ -32,7 +32,9 @@ Gem::Specification.new do |s|
      "examples/toy.rb",
      "graphiterb.gemspec",
      "lib/graphiterb.rb",
+     "lib/graphiterb/accumulator.rb",
      "lib/graphiterb/monitors.rb",
+     "lib/graphiterb/monitors/accumulations_consumer.rb",
      "lib/graphiterb/monitors/directory_tree.rb",
      "lib/graphiterb/monitors/disk_space.rb",
      "lib/graphiterb/monitors/system.rb",
