@@ -57,24 +57,24 @@ module Graphiterb
         df.each do |handle, size, spaceused, spacefree, percentused, location|
           disk_name = handle.gsub(/^\//, '').split('/')
           percent_free = (100.0 * spacefree.to_f / (spaceused.to_f + spacefree.to_f)) rescue 0.0
-          metrics << [scope(hostname, disk_name, 'available'), percent_free]
+          metrics << [scope(graphite_identifier, disk_name, 'available'), percent_free]
         end
 
         lines = top
         
-        metrics << [scope(hostname, 'cpu', 'avg_usage'),   cpu(lines)]
+        metrics << [scope(graphite_identifier, 'cpu', 'avg_usage'),   cpu(lines)]
 
         proc_total, proc_running = processes(lines)
-        metrics << [scope(hostname, 'processes', 'total'),   proc_total   ]
-        metrics << [scope(hostname, 'processes', 'running'), proc_running ]
+        metrics << [scope(graphite_identifier, 'processes', 'total'),   proc_total   ]
+        metrics << [scope(graphite_identifier, 'processes', 'running'), proc_running ]
 
         mem_used, mem_free = memory(lines)
         swap_used, swap_free = swap(lines)
         
-        metrics << [scope(hostname, 'memory', 'used'), mem_used  ]
-        metrics << [scope(hostname, 'memory', 'free'), mem_free  ]
-        metrics << [scope(hostname, 'swap', 'used'),   swap_used ]
-        metrics << [scope(hostname, 'swap', 'free'),   swap_free ]
+        metrics << [scope(graphite_identifier, 'memory', 'used'), mem_used  ]
+        metrics << [scope(graphite_identifier, 'memory', 'free'), mem_free  ]
+        metrics << [scope(graphite_identifier, 'swap', 'used'),   swap_used ]
+        metrics << [scope(graphite_identifier, 'swap', 'free'),   swap_free ]
       end
       
     end

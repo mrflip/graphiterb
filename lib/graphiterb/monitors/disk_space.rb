@@ -21,7 +21,7 @@ module Graphiterb
         #         "/dev/sdb1", "39373712", "20488716", "16884908", "55%", "/"
         df.each do |handle, size, spaceused, spacefree, percentfree, location|
           disk_name = handle.gsub(/^\//, '').split('/')
-          metrics << [scope(hostname, disk_name, 'available'), spacefree.to_i]
+          metrics << [scope(graphite_identifier, disk_name, 'available'), spacefree.to_i]
         end
       end
     end

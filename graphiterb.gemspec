@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{graphiterb}
-  s.version = "0.2.11"
+  s.version = "0.2.12"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Philip (flip) Kromer (@mrflip)"]
-  s.date = %q{2010-09-22}
+  s.date = %q{2010-09-28}
   s.description = %q{Uses http://github.com/mrflip/configliere and http://graphite.wikidot.com}
   s.email = %q{info@infochimps.org}
   s.extra_rdoc_files = [
@@ -24,11 +24,6 @@ Gem::Specification.new do |s|
      "README.textile",
      "Rakefile",
      "VERSION",
-     "examples/api_call_monitor.rb",
-     "examples/file_monitor.rb",
-     "examples/loadavg_graphite_sender.rb",
-     "examples/run_servers.sh",
-     "examples/storage_monitor.rb",
      "examples/toy.rb",
      "graphiterb.gemspec",
      "lib/graphiterb.rb",
@@ -55,11 +50,7 @@ Gem::Specification.new do |s|
   s.test_files = [
     "spec/graphiterb_spec.rb",
      "spec/spec_helper.rb",
-     "examples/toy.rb",
-     "examples/storage_monitor.rb",
-     "examples/loadavg_graphite_sender.rb",
-     "examples/file_monitor.rb",
-     "examples/api_call_monitor.rb"
+     "examples/toy.rb"
   ]
 
   if s.respond_to? :specification_version then

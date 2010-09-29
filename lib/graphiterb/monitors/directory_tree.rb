@@ -27,9 +27,9 @@ module Graphiterb
       def get_metrics metrics, since
         recent = Directory.recency_filter
         dirs.each do |dir|
-          metrics << [scope(dir.name, 'num_files', hostname), dir.num_files(&recent)   ]
-          metrics << [scope(dir.name, 'size', hostname),      dir.size(&recent)        ]
-          metrics << [scope(dir.name, 'lines', hostname),     dir.line_counts(&recent) ]
+          metrics << [scope(dir.name, 'num_files', graphite_identifier), dir.num_files(&recent)   ]
+          metrics << [scope(dir.name, 'size', graphite_identifier),      dir.size(&recent)        ]
+          metrics << [scope(dir.name, 'lines', graphite_identifier),     dir.line_counts(&recent) ]
         end
       end
 

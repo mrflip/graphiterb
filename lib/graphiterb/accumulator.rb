@@ -11,7 +11,7 @@ module Graphiterb
   #
   # By default incrementing 'my_value' which actually increment a
   # counter stored at the key
-  # 'graphiterb_accumulator:my_value:HOSTNAME'.
+  # 'graphiterb_accumulator:my_value:GRAPHITE_IDENTIFIER'.
   #
   # See Graphiterb::Monitors::AccumulationsConsumer for the periodic
   # monitor that will consume the accumulated counts.
@@ -87,7 +87,7 @@ module Graphiterb
     # @param [Array<String>, String] args
     # @return [String]
     def scope *args
-      [main_scope, args, hostname].flatten.compact.map(&:to_s).join('.')
+      [main_scope, args, graphite_identifier].flatten.compact.map(&:to_s).join('.')
     end
 
   end
